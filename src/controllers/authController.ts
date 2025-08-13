@@ -3,9 +3,9 @@ import prisma from '../lib/db';
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv';
-
+import { JWTSECRET } from '../lib/config';
 dotenv.config();
-const JWTSECRET = process.env.JWT || "audfjhasiudfjonhsiafoesdnvhsidjamnhjdf";
+
 
 export const signup = async(req:Request,res:Response)=>{
     try{

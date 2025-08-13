@@ -7,16 +7,16 @@ export const usermiddleware = (req:Request, res:Response, next:NextFunction) =>{
     
     const token = req.headers.authorization;
 
+
     if(!token){
         res.status(411).json({
             message:"auth token not found brother"
         });
         return;
     }
-    const decoded = jwt.verify(token,JWTSECRET) as {id:string}
-
-    if(decoded && decoded.id){
-        req.userId = decoded.id;
+    const decoded = jwt.verify(token,JWTSECRET) as {sub:string}
+    if(decoded && decoded.sub){
+        req.userId = decoded.sub;
         next();
     }
     else{

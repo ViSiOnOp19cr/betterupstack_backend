@@ -1,6 +1,26 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/db'
+import { Resend } from 'resend';
+import dotenv from 'dotenv';
+dotenv.config();
+const API = process.env.Mail_API;
+console.log(API);
+const resend = new Resend(API);
 
+export const sendMail = async () => {
+  const { data, error } = await resend.emails.send({
+    from: 'onboarding@resend.dev',
+    to: ['chandancr515@gmail.com'],
+    subject: 'Website Down Alert 🚨',
+    html: '<strong>Alert: One of your websites is down!</strong>',
+  });
+
+  if (error) {
+    console.error("Error sending email:", error);
+  } else {
+    console.log("Mail sent:", data);
+  }
+};
 
 export const CreateWebsite = async (req: Request, res: Response) => {
     try {
@@ -33,31 +53,49 @@ export const CreateWebsite = async (req: Request, res: Response) => {
 export const websiteStatus = async(req: Request, res: Response) => {
     try {
         const website = await prisma.website.findFirst({
-
             where: {
                 user_id: req.userId!,
                 id: req.params.websiteId!
-            },
-            include: {
-                ticks: {
-                    orderBy: [{
-                        createdAt: 'desc'
-                    }],
-                    take: 1
-                }
             }
         });
+
         if (!website) {
             res.status(411).json({
                 message: "website not found"
-            })
-            return
+            });
+            return;
         }
+
+        // Fetch recent ticks with region info
+        const recentTicks = await prisma.website_tick.findMany({
+            where: { website_id: website.id },
+            include: { region: true },
+            orderBy: { createdAt: 'desc' },
+            take: 20
+        });
+
+        const latest_status = recentTicks[0]?.status || 'Unknown';
+        const upCount = recentTicks.filter(t => t.status === 'Up').length;
+        const uptime_percentage = recentTicks.length ? Math.round((upCount / recentTicks.length) * 100) : 0;
+        for (const tick of recentTicks) {
+      if (tick.status === 'Down') {
+        await sendMail(); 
+        break; 
+      }
+    }
+
         res.json({
             url: website.url,
             id: website.id,
-            user_id: website.user_id
-        })
+            latest_status,
+            uptime_percentage,
+            recent_ticks: recentTicks.map(t => ({
+                status: t.status,
+                response_time_ms: t.response_time_ms,
+                region: t.region.name,
+                timestamp: t.createdAt
+            }))
+        });
     }catch(error){
         res.status(500).json({
             error
