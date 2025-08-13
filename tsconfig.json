@@ -43,4 +43,13 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   }
+  ,
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "test",
+    "jest.config.ts"
+  ]
 }

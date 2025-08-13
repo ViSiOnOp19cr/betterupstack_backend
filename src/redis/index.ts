@@ -4,11 +4,24 @@ let client: RedisClientType;
 
 async function getRedisClient(): Promise<RedisClientType> {
     if (!client) {
-        client = createClient();
+        const url = process.env.REDIS_URL;
+        client = url ? createClient({ url }) : createClient();
         client.on("error", (err) => console.log("Redis Client Error", err));
         await client.connect();
     }
     return client;
+}
+
+export async function disconnectRedis(): Promise<void> {
+    if (client) {
+        try {
+            await client.quit();
+        } catch (_) {
+            // ignore
+        }
+        // @ts-expect-error reset for tests
+        client = undefined;
+    }
 }
 
 type WebsiteEvent = {url: string, id: string}
@@ -44,6 +57,14 @@ export async function xAddBulk(websites: WebsiteEvent[]) {
 
 export async function xReadGroup(consumerGroup: string, workerId: string): Promise<MessageType[] | undefined> {
     const c = await getRedisClient();
+    // Ensure group exists before attempting to read
+    try {
+        await c.xGroupCreate(STREAM_NAME, consumerGroup, '$', { MKSTREAM: true });
+    } catch (e: any) {
+        if (!String(e?.message || '').includes('BUSYGROUP')) {
+            throw e;
+        }
+    }
     const res = await c.xReadGroup(
         consumerGroup, workerId, {
             key: STREAM_NAME,
