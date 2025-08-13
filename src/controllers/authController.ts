@@ -14,6 +14,7 @@ export const signup = async(req:Request,res:Response)=>{
             res.status(400).json({
                 message:"username or password is missing"
             });
+            return;
         }
         const hashpass = await bcrypt.hash(password, 10);
         await prisma.user.create({

@@ -64,3 +64,41 @@ export const websiteStatus = async(req: Request, res: Response) => {
         })
     }
 }
+export const getUserWebsites = async (req: Request, res: Response) => {
+    try {
+        const websites = await prisma.website.findMany({
+            where: {
+                user_id: req.userId!
+            },
+            include: {
+                ticks: {
+                    orderBy: {
+                        createdAt: 'desc'
+                    },
+                    take: 1
+                }
+            },
+            orderBy: {
+                time_added: 'desc'
+            }
+        });
+
+        const websitesWithStatus = websites.map(website => ({
+            id: website.id,
+            url: website.url,
+            time_added: website.time_added,
+            latest_status: website.ticks[0]?.status || 'Unknown',
+            last_checked: website.ticks[0]?.createdAt || null
+        }));
+
+        res.json({
+            websites: websitesWithStatus,
+            total: websites.length
+        });
+    } catch (error) {
+        console.error('Get user websites error:', error);
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+};
