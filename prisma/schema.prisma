@@ -16,6 +16,7 @@ model user {
   id          String      @id   @default(uuid())
   username    String      @unique
   password    String
+  email       String?      
   websites    website[]
 } 
 

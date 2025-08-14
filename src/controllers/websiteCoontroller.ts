@@ -9,10 +9,16 @@ const resend = new Resend(API);
 
 export const sendMail = async () => {
   const { data, error } = await resend.emails.send({
-    from: 'onboarding@resend.dev',
-    to: ['chandancr515@gmail.com'],
-    subject: 'Website Down Alert 🚨',
-    html: '<strong>Alert: One of your websites is down!</strong>',
+    from: 'Message from Upgaurd <hello@emails.chandancr.xyz>',
+    to: ['trlikhitha@gmail.com'],
+    subject: 'Phone is down 🚨',
+    html: `
+      <strong>Alert: Your phone is down!</strong>
+      <p>Your phone is down. Please check your phone and fix the issue.</p>
+      <p>Please check your phone and fix the issue.</p>
+      <p>Thank you for using Upgaurd.</p>
+      <p>Best regards,<br><strong>Upgaurd</strong></p>
+    `,
   });
 
   if (error) {
@@ -140,3 +146,25 @@ export const getUserWebsites = async (req: Request, res: Response) => {
         });
     }
 };
+export const updateUserEmail = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        if(!email){
+            res.status(411).json({
+                message: "email not to be found"
+            });
+            return;
+        }
+        await prisma.user.update({
+            where: { id: req.userId! },
+            data: { email: email }
+        });
+        res.json({
+            message: "Email updated successfully"
+        });
+    } catch (error) {
+        res.status(500).json({
+            error
+        })
+    }
+}
