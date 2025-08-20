@@ -7,25 +7,45 @@ const API = process.env.Mail_API;
 console.log(API);
 const resend = new Resend(API);
 
-export const sendMail = async () => {
-  const { data, error } = await resend.emails.send({
-    from: 'Message from Upgaurd <hello@emails.chandancr.xyz>',
-    to: ['trlikhitha@gmail.com'],
-    subject: 'Phone is down 🚨',
-    html: `
-      <strong>Alert: Your phone is down!</strong>
-      <p>Your phone is down. Please check your phone and fix the issue.</p>
-      <p>Please check your phone and fix the issue.</p>
+export const sendMail = async (mail: string, status: string) => {
+    if (status == 'DOWN') {
+        const { data, error } = await resend.emails.send({
+            from: 'Message from Upgaurd <hello@emails.chandancr.xyz>',
+            to: [mail],
+            subject: 'Website is down. 🚨',
+            html: `
+      <strong>Alert: Your website is down right now.!</strong>
+      <p>Your website status is down please check your issues with website</p>
       <p>Thank you for using Upgaurd.</p>
       <p>Best regards,<br><strong>Upgaurd</strong></p>
     `,
-  });
+        });
+        if (error) {
+            console.error("Error sending email:", error);
+        } else {
+            console.log("Mail sent:", data);
+        }
+    }
+    else {
+        const { data, error } = await resend.emails.send({
+            from: 'Message from Upgaurd <hello@emails.chandancr.xyz>',
+            to: [mail],
+            subject: 'Website is UP again',
+            html: `
+      <strong>Alert: Your website is Up!</strong>
+      <p>Your website status is Up and its working fine.</p>
+      <p>Thank you for using Upgaurd.</p>
+      <p>Best regards,<br><strong>Upgaurd</strong></p>
+    `,
+        });
+        if (error) {
+            console.error("Error sending email:", error);
+        } else {
+            console.log("Mail sent:", data);
+        }
+    }
 
-  if (error) {
-    console.error("Error sending email:", error);
-  } else {
-    console.log("Mail sent:", data);
-  }
+
 };
 
 export const CreateWebsite = async (req: Request, res: Response) => {
@@ -51,12 +71,12 @@ export const CreateWebsite = async (req: Request, res: Response) => {
         });
     } catch (error) {
         res.status(500).json({
-            error
+            message: "internal server error"
         })
     }
 }
 
-export const websiteStatus = async(req: Request, res: Response) => {
+export const websiteStatus = async (req: Request, res: Response) => {
     try {
         const website = await prisma.website.findFirst({
             where: {
@@ -81,20 +101,21 @@ export const websiteStatus = async(req: Request, res: Response) => {
         });
 
         const latest_status = recentTicks[0]?.status || 'Unknown';
-        const upCount = recentTicks.filter(t => t.status === 'Up').length;
-        const uptime_percentage = recentTicks.length ? Math.round((upCount / recentTicks.length) * 100) : 0;
-        for (const tick of recentTicks) {
-      if (tick.status === 'Down') {
-        await sendMail(); 
-        break; 
-      }
-    }
+        const secondLatest_status = recentTicks[1]?.status || 'Unknown'
+        if (latest_status !== secondLatest_status) {
+            const user = await prisma.user.findFirst({
+                where: {
+                    id: req.userId!,
+                },
+            });
+            console.log("users email is following", user?.email)
+            await sendMail(user?.email!, latest_status)
+        }
 
         res.json({
             url: website.url,
             id: website.id,
             latest_status,
-            uptime_percentage,
             recent_ticks: recentTicks.map(t => ({
                 status: t.status,
                 response_time_ms: t.response_time_ms,
@@ -102,9 +123,9 @@ export const websiteStatus = async(req: Request, res: Response) => {
                 timestamp: t.createdAt
             }))
         });
-    }catch(error){
+    } catch (error) {
         res.status(500).json({
-            error
+            message: "internal server error"
         })
     }
 }
@@ -149,7 +170,7 @@ export const getUserWebsites = async (req: Request, res: Response) => {
 export const updateUserEmail = async (req: Request, res: Response) => {
     try {
         const { email } = req.body;
-        if(!email){
+        if (!email) {
             res.status(411).json({
                 message: "email not to be found"
             });
@@ -164,7 +185,7 @@ export const updateUserEmail = async (req: Request, res: Response) => {
         });
     } catch (error) {
         res.status(500).json({
-            error
+            message: "internal server error"
         })
     }
 }

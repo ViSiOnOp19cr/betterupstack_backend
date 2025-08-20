@@ -30,6 +30,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "dev": "tsc -b && node dist/index.js",
     "lint": "eslint --ext .ts src",
     "seed": "ts-node src/seed.ts",
     "test": "jest"

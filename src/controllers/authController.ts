@@ -72,3 +72,19 @@ export const signin = async(req:Request, res:Response) =>{
         });
     }
 }
+export const me = async(req:Request , res:Response)=>{
+    const user = await prisma.user.findFirst({
+        where:{
+            id:req.userId!
+        },
+    })
+    if(!user){
+        res.status(404).json({
+            message:"user not found"
+        })
+    }
+    res.json({
+        id:user?.id,
+        email:user?.email
+    })
+}
