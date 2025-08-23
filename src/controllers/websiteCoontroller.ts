@@ -100,15 +100,14 @@ export const websiteStatus = async (req: Request, res: Response) => {
             take: 20
         });
 
-        const latest_status = recentTicks[0]?.status || 'Unknown';
+        const latest_status =  recentTicks[0]?.status || 'Unknown'
         const secondLatest_status = recentTicks[1]?.status || 'Unknown'
-        if (latest_status !== secondLatest_status) {
+        if (latest_status != secondLatest_status) {
             const user = await prisma.user.findFirst({
                 where: {
                     id: req.userId!,
                 },
             });
-            console.log("users email is following", user?.email)
             await sendMail(user?.email!, latest_status)
         }
 
