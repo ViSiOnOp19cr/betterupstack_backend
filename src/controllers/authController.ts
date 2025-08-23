@@ -60,7 +60,7 @@ export const signin = async(req:Request, res:Response) =>{
         };
         const token = jwt.sign({
             sub:user.id,
-        }, JWTSECRET,{ expiresIn: '1h' });
+        }, JWTSECRET);
 
         res.status(200).json({
             message:"signed in successfully",
@@ -85,6 +85,7 @@ export const me = async(req:Request , res:Response)=>{
     }
     res.json({
         id:user?.id,
+        username:user?.username,
         email:user?.email
     })
 }
