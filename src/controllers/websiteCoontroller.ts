@@ -1,51 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/db'
-import { Resend } from 'resend';
 import dotenv from 'dotenv';
 dotenv.config();
-const API = process.env.Mail_API;
-console.log(API);
-const resend = new Resend(API);
 
-export const sendMail = async (mail: string, status: string) => {
-    if (status == 'DOWN') {
-        const { data, error } = await resend.emails.send({
-            from: 'Message from Upgaurd <hello@emails.chandancr.xyz>',
-            to: [mail],
-            subject: 'Website is down. 🚨',
-            html: `
-      <strong>Alert: Your website is down right now.!</strong>
-      <p>Your website status is down please check your issues with website</p>
-      <p>Thank you for using Upgaurd.</p>
-      <p>Best regards,<br><strong>Upgaurd</strong></p>
-    `,
-        });
-        if (error) {
-            console.error("Error sending email:", error);
-        } else {
-        }
-    }
-    else {
-        const { data, error } = await resend.emails.send({
-            from: 'Message from Upgaurd <hello@emails.chandancr.xyz>',
-            to: [mail],
-            subject: 'Website is UP and working Fine',
-            html: `
-      <strong>Alert: Your website is Up!</strong>
-      <p>Your website status is Up and its working fine.</p>
-      <p>Thank you for using Upgaurd.</p>
-      <p>Best regards,<br><strong>Upgaurd</strong></p>
-    `,
-        });
-        if (error) {
-            console.error("Error sending email:", error);
-        } else {
-
-        }
-    }
-
-
-};
 
 export const CreateWebsite = async (req: Request, res: Response) => {
     try {
@@ -99,21 +56,10 @@ export const websiteStatus = async (req: Request, res: Response) => {
             take: 20
         });
 
-        const latest_status = recentTicks[0]?.status || 'Unknown'
-        const secondLatest_status = recentTicks[1]?.status || 'Unknown'
-        if (latest_status != secondLatest_status) {
-            const user = await prisma.user.findFirst({
-                where: {
-                    id: req.userId!,
-                },
-            });
-            await sendMail(user?.email!, latest_status)
-        }
 
         res.json({
             url: website.url,
             id: website.id,
-            latest_status,
             recent_ticks: recentTicks.map(t => ({
                 status: t.status,
                 response_time_ms: t.response_time_ms,
