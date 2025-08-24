@@ -100,7 +100,23 @@ export const websiteStatus = async (req: Request, res: Response) => {
             take: 20
         });
 
-        const latest_status =  recentTicks[0]?.status || 'Unknown'
+        const latest_status = recentTicks[0]?.status || 'Unknown'
+        if (recentTicks.length <= 1) {
+            res.json({
+                url: website.url,
+                id: website.id,
+                latest_status,
+                recent_ticks: recentTicks.map(t => ({
+                    status: t.status,
+                    response_time_ms: t.response_time_ms,
+                    region: t.region.name,
+                    timestamp: t.createdAt
+                }))
+            });
+            return;
+        }
+
+
         const secondLatest_status = recentTicks[1]?.status || 'Unknown'
         if (latest_status != secondLatest_status) {
             const user = await prisma.user.findFirst({
