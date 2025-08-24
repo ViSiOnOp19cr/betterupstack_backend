@@ -23,14 +23,13 @@ export const sendMail = async (mail: string, status: string) => {
         if (error) {
             console.error("Error sending email:", error);
         } else {
-            console.log("Mail sent:", data);
         }
     }
     else {
         const { data, error } = await resend.emails.send({
             from: 'Message from Upgaurd <hello@emails.chandancr.xyz>',
             to: [mail],
-            subject: 'Website is UP again',
+            subject: 'Website is UP and working Fine',
             html: `
       <strong>Alert: Your website is Up!</strong>
       <p>Your website status is Up and its working fine.</p>
@@ -41,7 +40,7 @@ export const sendMail = async (mail: string, status: string) => {
         if (error) {
             console.error("Error sending email:", error);
         } else {
-            console.log("Mail sent:", data);
+
         }
     }
 
@@ -101,22 +100,6 @@ export const websiteStatus = async (req: Request, res: Response) => {
         });
 
         const latest_status = recentTicks[0]?.status || 'Unknown'
-        if (recentTicks.length <= 1) {
-            res.json({
-                url: website.url,
-                id: website.id,
-                latest_status,
-                recent_ticks: recentTicks.map(t => ({
-                    status: t.status,
-                    response_time_ms: t.response_time_ms,
-                    region: t.region.name,
-                    timestamp: t.createdAt
-                }))
-            });
-            return;
-        }
-
-
         const secondLatest_status = recentTicks[1]?.status || 'Unknown'
         if (latest_status != secondLatest_status) {
             const user = await prisma.user.findFirst({

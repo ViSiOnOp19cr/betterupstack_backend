@@ -23,7 +23,7 @@ async function main() {
 
         let promises = response.map(({message}: {message: {url: string; id: string}}) => fetchWebsite(message.url, message.id))
         await Promise.all(promises);
-        console.log(promises.length);
+
 
         xAckBulk(REGION_ID, response.map(({id}: {id: string}) => id));
     }
