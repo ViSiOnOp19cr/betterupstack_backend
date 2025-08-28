@@ -13,6 +13,7 @@ export const usermiddleware = (req:Request, res:Response, next:NextFunction) =>{
             message:"auth token not found brother"
         });
         return;
+        
     }
     const decoded = jwt.verify(token,JWTSECRET) as {sub:string}
     if(decoded && decoded.sub){

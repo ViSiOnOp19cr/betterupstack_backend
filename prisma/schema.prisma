@@ -37,7 +37,10 @@ model region {
 
 model website_tick {
   id                      String  @id     @default(uuid())
-  response_time_ms        Int
+  connection_time_ms      Int?
+  tls_handshake_time_ms   Int?
+  data_transfer_time_ms   Int?
+  total_response_time_ms  Int?
   status                  website_status
   region                  region     @relation(fields: [region_id], references: [id])
   website                 website     @relation(fields: [website_id], references: [id])     

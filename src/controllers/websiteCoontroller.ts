@@ -48,7 +48,6 @@ export const websiteStatus = async (req: Request, res: Response) => {
             return;
         }
 
-        // Fetch recent ticks with region info
         const recentTicks = await prisma.website_tick.findMany({
             where: { website_id: website.id },
             include: { region: true },
@@ -56,18 +55,100 @@ export const websiteStatus = async (req: Request, res: Response) => {
             take: 20
         });
 
+        let uptimePercentage = 0;
+        let latestStatus = 'Unknown';
+        let continuousUptimeStart = null;
+        let uptimeDuration = null;
+
+        if (recentTicks.length > 0) {
+            latestStatus = recentTicks[0]?.status!;
+
+            const upCount = recentTicks.filter(tick => tick.status === 'Up').length;
+            uptimePercentage = Math.round((upCount / recentTicks.length) * 100 * 100) / 100; 
+
+            if (latestStatus === 'Up') {
+
+                let uptimeStartIndex = 0;
+                for (let i = 0; i < recentTicks.length; i++) {
+                    if (recentTicks[i]?.status !== 'Up') {
+                        uptimeStartIndex = i;
+                        break;
+                    }
+                    uptimeStartIndex = i + 1; 
+                }
+
+                if (uptimeStartIndex < recentTicks.length) {
+                    continuousUptimeStart = recentTicks[uptimeStartIndex - 1]?.createdAt || recentTicks[recentTicks.length - 1]?.createdAt;
+                } else {
+                    const oldestUpTick = await prisma.website_tick.findFirst({
+                        where: { 
+                            website_id: website.id,
+                            status: { not: 'Up' }
+                        },
+                        orderBy: { createdAt: 'desc' },
+                        take: 1
+                    });
+
+                    if (oldestUpTick) {
+                        const firstUpAfterDown = await prisma.website_tick.findFirst({
+                            where: { 
+                                website_id: website.id,
+                                status: 'Up',
+                                createdAt: { gt: oldestUpTick.createdAt }
+                            },
+                            orderBy: { createdAt: 'asc' }
+                        });
+                        continuousUptimeStart = firstUpAfterDown?.createdAt || recentTicks[recentTicks.length - 1]?.createdAt;
+                    } else {
+                        const firstTick = await prisma.website_tick.findFirst({
+                            where: { website_id: website.id },
+                            orderBy: { createdAt: 'asc' }
+                        });
+                        continuousUptimeStart = firstTick?.createdAt || null;
+                    }
+                }
+
+                if (continuousUptimeStart) {
+                    const now = new Date();
+                    const diffMs = now.getTime() - new Date(continuousUptimeStart).getTime();
+                    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                    uptimeDuration = {
+                        total_ms: diffMs,
+                        days,
+                        hours,
+                        minutes,
+                        formatted: days > 0 
+                            ? `${days}d ${hours}h ${minutes}m`
+                            : hours > 0 
+                            ? `${hours}h ${minutes}m`
+                            : `${minutes}m`
+                    };
+                }
+            }
+        }
 
         res.json({
             url: website.url,
             id: website.id,
+            latest_status: latestStatus,
+            uptime_percentage: uptimePercentage,
+            continuous_uptime_start: continuousUptimeStart,
+            uptime_duration: uptimeDuration,
             recent_ticks: recentTicks.map(t => ({
                 status: t.status,
-                response_time_ms: t.response_time_ms,
-                region: t.region.name,
+                connection_time_ms: t.connection_time_ms,
+                tls_handshake_time_ms: t.tls_handshake_time_ms,
+                data_transfer_time_ms: t.data_transfer_time_ms,
+                total_response_time_ms: t.total_response_time_ms,
+                region: t.region?.name || 'Unknown',
                 timestamp: t.createdAt
             }))
         });
     } catch (error) {
+        console.error('Website status error:', error);
         res.status(500).json({
             message: "internal server error"
         })
