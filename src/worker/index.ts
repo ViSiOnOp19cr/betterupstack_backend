@@ -51,16 +51,15 @@ async function fetchWebsite(url: string, websiteId: string) {
       end: 0,
     };
 
-    const req = transport.get(url, { // Use the selected transport
+    const req = transport.get(url, { 
       headers: { 'User-Agent': 'BetterUpStack-Worker/1.0' }
     }, (res) => {
-      res.on('data', () => {}); // Consume data to fire 'end' event
+      res.on('data', () => {}); 
       res.on('end', async () => {
         timings.end = performance.now();
         const status = res.statusCode && res.statusCode >= 200 && res.statusCode < 400 ? "Up" : "Down";
 
         const connection_time_ms = Math.round(timings.connect - timings.socket);
-        // For http, secureConnect is 0, so TLS handshake will be 0.
         const tls_handshake_time_ms = Math.round(timings.secureConnect - timings.connect);
         const data_transfer_time_ms = Math.round(timings.end - timings.response);
         const total_response_time_ms = Math.round(timings.end - timings.start);
