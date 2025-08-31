@@ -1,7 +1,10 @@
 {
   "devDependencies": {
+    "@types/express-session": "^1.18.2",
     "@types/jest": "^29.5.14",
     "@types/node": "^24.2.0",
+    "@types/passport": "^1.0.17",
+    "@types/passport-google-oauth20": "^2.0.16",
     "@types/supertest": "^2.0.16",
     "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.39.1",
@@ -23,7 +26,10 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "express-session": "^1.18.2",
     "jsonwebtoken": "^9.0.2",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "prisma": "^6.13.0",
     "redis": "^5.8.0",
     "resend": "^6.0.1"

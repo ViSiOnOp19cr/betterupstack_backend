@@ -6,21 +6,37 @@ import dotenv from 'dotenv';
 import { JWTSECRET } from '../lib/config';
 dotenv.config();
 
-
 export const signup = async(req:Request,res:Response)=>{
     try{
-        const {username, password} = req.body;
+        const {username, password, email} = req.body;
         if(!username || !password) {
             res.status(400).json({
                 message:"username or password is missing"
             });
             return;
         }
+
+        // Check if user exists with Google OAuth
+        if (email) {
+            const existingOAuthUser = await prisma.user.findUnique({
+                where: { email }
+            });
+            
+            if (existingOAuthUser && existingOAuthUser.google_id) {
+                res.status(400).json({
+                    message: "An account with this email already exists. Please sign in with Google."
+                });
+                return;
+            }
+        }
+
         const hashpass = await bcrypt.hash(password, 10);
         await prisma.user.create({
             data:{
                 username,
-                password:hashpass
+                password:hashpass,
+                email,
+                auth_provider: 'local'
             }
         });
         res.status(200).json({
@@ -38,26 +54,40 @@ export const signin = async(req:Request, res:Response) =>{
         const {username, password} = req.body;
         if(!username || !password){
             res.status(400).json({
-                message:"usename or password is missing"
-            })
-        };
+                message:"username or password is missing"
+            });
+            return;
+        }
+
         const user = await prisma.user.findFirst({
             where:{
                 username:username
             }
         });
+
         if(!user){
             res.status(400).json({
                 message:"user not found"
             });
             return;
         }
-        const pass = await bcrypt.compare(password,user.password);
+
+        // Check if user signed up with Google OAuth
+        if (user.google_id && !user.password) {
+            res.status(400).json({
+                message:"This account was created with Google. Please sign in with Google."
+            });
+            return;
+        }
+
+        const pass = await bcrypt.compare(password,user.password!);
         if(!pass){
             res.status(400).json({
-                message:"pass is wrong bro think harder"
-            })
-        };
+                message:"password is incorrect"
+            });
+            return;
+        }
+
         const token = jwt.sign({
             sub:user.id,
         }, JWTSECRET);
@@ -72,6 +102,7 @@ export const signin = async(req:Request, res:Response) =>{
         });
     }
 }
+
 export const me = async(req:Request , res:Response)=>{
     const user = await prisma.user.findFirst({
         where:{
@@ -81,11 +112,15 @@ export const me = async(req:Request , res:Response)=>{
     if(!user){
         res.status(404).json({
             message:"user not found"
-        })
+        });
+        return;
     }
     res.json({
         id:user?.id,
         username:user?.username,
-        email:user?.email
+        email:user?.email,
+        name:user?.name,
+        picture:user?.picture,
+        auth_provider:user?.auth_provider
     })
 }

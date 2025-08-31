@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,41 +6,49 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 model user {
   id          String      @id   @default(uuid())
-  username    String      @unique
-  password    String
-  email       String?      
+  username    String?     @unique  
+  password    String?                
+  email       String?     @unique    
+  
+  // New OAuth fields
+  google_id   String?     @unique
+  name        String?
+  picture     String?
+  auth_provider String?    
+  
   websites    website[]
-} 
+}
 
 model website {
-  id            String  @id    @default(uuid()) 
-  url           String
-  user_id       String
-  time_added     DateTime
-  ticks         website_tick[]
-  user          user    @relation(fields: [user_id], references: [id])
+  id         String         @id @default(uuid())
+  url        String
+  user_id    String
+  time_added DateTime
+  user       user           @relation(fields: [user_id], references: [id])
+  ticks      website_tick[]
 }
 
 model region {
-  id            String  @id    @default(uuid()) 
-  name          String
-  tickes        website_tick[]
+  id     String         @id @default(uuid())
+  name   String
+  tickes website_tick[]
 }
 
 model website_tick {
-  id                      String  @id     @default(uuid())
-  connection_time_ms      Int?
-  tls_handshake_time_ms   Int?
-  data_transfer_time_ms   Int?
-  total_response_time_ms  Int?
-  status                  website_status
-  region                  region     @relation(fields: [region_id], references: [id])
-  website                 website     @relation(fields: [website_id], references: [id])     
-  region_id               String
-  website_id              String
-  createdAt               DateTime    @default(now())
+  id                     String         @id @default(uuid())
+  status                 website_status
+  region_id              String
+  website_id             String
+  createdAt              DateTime       @default(now())
+  connection_time_ms     Int?
+  data_transfer_time_ms  Int?
+  tls_handshake_time_ms  Int?
+  total_response_time_ms Int?
+  region                 region         @relation(fields: [region_id], references: [id])
+  website                website        @relation(fields: [website_id], references: [id])
 }
 
 enum website_status {
