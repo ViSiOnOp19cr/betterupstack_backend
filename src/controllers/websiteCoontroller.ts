@@ -195,6 +195,8 @@ export const getUserWebsites = async (req: Request, res: Response) => {
 export const updateUserEmail = async (req: Request, res: Response) => {
     try {
         const { email } = req.body;
+        console.log(req.userId);
+        console.log(email);
         if (!email) {
             res.status(411).json({
                 message: "email not to be found"

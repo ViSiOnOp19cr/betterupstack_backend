@@ -16,7 +16,6 @@ export const signup = async(req:Request,res:Response)=>{
             return;
         }
 
-        // Check if user exists with Google OAuth
         if (email) {
             const existingOAuthUser = await prisma.user.findUnique({
                 where: { email }
@@ -72,7 +71,6 @@ export const signin = async(req:Request, res:Response) =>{
             return;
         }
 
-        // Check if user signed up with Google OAuth
         if (user.google_id && !user.password) {
             res.status(400).json({
                 message:"This account was created with Google. Please sign in with Google."
@@ -102,6 +100,7 @@ export const signin = async(req:Request, res:Response) =>{
         });
     }
 }
+
 
 export const me = async(req:Request , res:Response)=>{
     const user = await prisma.user.findFirst({

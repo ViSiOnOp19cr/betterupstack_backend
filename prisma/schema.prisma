@@ -11,7 +11,7 @@ model user {
   id          String      @id   @default(uuid())
   username    String?     @unique  
   password    String?                
-  email       String?     @unique    
+  email       String?       @unique 
   
   // New OAuth fields
   google_id   String?     @unique

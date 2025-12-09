@@ -9,7 +9,7 @@ import { SESSION_SECRET, CLIENT_URL } from './lib/config';
 const app = express();
 
 app.use(cors({
-    origin: CLIENT_URL,
+    origin: "*",
     credentials: true
 }));
 
